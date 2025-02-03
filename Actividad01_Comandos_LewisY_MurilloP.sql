@@ -28,6 +28,7 @@ WITH
 			AND cnt.table_name IS NULL
 		ORDER BY tbl.table_name;
 
+
 -- 02 - Productos sin Nombre.
 --		Regla de Integridad de Atributo - Restricción de Dominio.
 WITH
@@ -124,4 +125,48 @@ WHERE pdi.table_schema = 'actividad01'
 	ORDER BY tbl.table_name;
 
 
--- 05 -
+-- 05 - Productos con Precios Negativos
+--		Regla de Integridad de Dominio - Rango permitido
+
+WITH CheckRestriccionesPrecio AS (
+    SELECT
+        con.constraint_name,
+        con.constraint_type,
+        kcu.column_name,
+        CASE 
+            WHEN con.constraint_type = 'CHECK' THEN pg_get_constraintdef(con.constraint_name::regclass)
+            ELSE NULL
+        END AS check_clause
+    FROM information_schema.table_constraints AS con
+    INNER JOIN information_schema.key_column_usage AS kcu
+        ON con.constraint_name = kcu.constraint_name
+    WHERE con.table_schema = 'actividad01'
+      AND con.table_name = 'producto'
+      AND kcu.column_name = 'precio'
+)
+SELECT 
+    tbl.table_schema AS ESQUEMA,
+    tbl.table_name AS NOMBRE_DE_TABLA,
+    tbl.table_type AS TIPO_DE_TABLA,
+    ci.column_name AS NOMBRE_DE_COLUMNA,
+    CASE
+        WHEN EXISTS (SELECT 1 FROM CheckRestriccionesPrecio WHERE column_name = 'precio') 
+        THEN 'La tabla "producto" tiene restricciones en esta columna'
+        ELSE 'La tabla "producto" no tiene restricciones en esta columna'
+    END AS MENSAJE_RESTRICCION,
+    (
+        SELECT check_clause
+        FROM CheckRestriccionesPrecio
+        WHERE column_name = 'precio'
+    ) AS CONDICION_CHECK
+FROM information_schema.tables tbl
+JOIN information_schema.columns ci
+    ON tbl.table_schema = ci.table_schema
+    AND tbl.table_name = ci.table_name
+WHERE tbl.table_schema = 'actividad01'
+AND tbl.table_name = 'producto'
+AND ci.column_name = 'precio'
+AND tbl.table_type = 'BASE TABLE'
+ORDER BY tbl.table_name;
+
+
