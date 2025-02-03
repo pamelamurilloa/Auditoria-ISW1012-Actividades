@@ -97,7 +97,7 @@ WHERE pdi.table_schema = 'actividad01'
   AND pdi.table_type = 'BASE TABLE';
 
 
--- 04 - Fechas Inconsistentes de creación
+-- 04 - Fechas Inconsistentes de Creación
 --		Regla de Integridad de Negocio
 	SELECT 
 	    tbl.table_schema AS ESQUEMA,
