@@ -57,8 +57,44 @@ WITH
 	ORDER BY tbl.table_name;
 
 
--- 03 - Llave Foránea no Detectada en Detalle de Pedidos hacia Pedidos.
+-- 03 - Llave Foránea no Detectada en Detalle de Pedidos hacia Productos.
 -- 		Regla de Integridad Referencial
+WITH fk_info AS (
+    SELECT 
+        kcu.table_schema,
+        kcu.table_name,
+        kcu.column_name,
+        ccu.table_name AS referenced_table_name
+    FROM information_schema.key_column_usage kcu
+    JOIN information_schema.constraint_table_usage ctu
+        ON kcu.constraint_name = ctu.constraint_name
+    JOIN information_schema.constraint_column_usage ccu
+        ON ctu.constraint_name = ccu.constraint_name
+    WHERE kcu.table_schema = 'actividad01'
+    AND kcu.table_name = 'pedido_detalle'
+),
+otras_fk AS (
+    SELECT STRING_AGG(column_name || ' -> ' || referenced_table_name, ', ') AS otras_llaves
+    FROM fk_info
+)
+SELECT 
+    pdi.table_schema AS ESQUEMA,
+    pdi.table_name AS NOMBRE_DE_TABLA,
+    pdi.table_type AS TIPO_DE_TABLA, 
+    CASE 
+        WHEN EXISTS (
+            SELECT 1
+            FROM fk_info
+            WHERE referenced_table_name = 'producto'
+              AND column_name = 'id_producto'
+        ) THEN 'Tiene llave foránea con producto en id_producto'
+        ELSE 'No tiene llave foránea con producto en id_producto'
+    END AS VALIDACION_LLAVE_FORANEA,
+    COALESCE((SELECT otras_llaves FROM otras_fk), 'No tiene otras llaves foráneas') AS OTRAS_LLAVES_FORANEAS
+FROM information_schema.tables pdi
+WHERE pdi.table_schema = 'actividad01'
+  AND pdi.table_name = 'pedido_detalle'
+  AND pdi.table_type = 'BASE TABLE';
 
 
 -- 04 - Fechas Inconsistentes de creación
