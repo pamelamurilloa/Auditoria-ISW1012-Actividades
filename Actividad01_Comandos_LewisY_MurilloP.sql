@@ -34,14 +34,14 @@ WITH
 	    SELECT * 
 	    FROM information_schema.columns 
 	    WHERE table_schema = 'actividad01' 
-	    AND table_name = 'producto' 
 	    AND column_name = 'nombre'
 	)
 	SELECT 
 	    tbl.table_schema AS ESQUEMA,
 	    tbl.table_name AS NOMBRE_DE_TABLA, 
+		col.column_name AS NOMBRE_DE_COLUMNA,
 	    tbl.table_type AS TIPO_DE_TABLA,
-		col.is_nullable,
+	    col.is_nullable,
 	    CASE COALESCE(col.is_nullable, '1')
 	        WHEN 'YES' THEN 'Permite valores nulos'
 	        ELSE 'No permite valores nulos'
@@ -51,9 +51,10 @@ WITH
 	    ON col.table_schema = tbl.table_schema
 	    AND col.table_name = tbl.table_name
 	WHERE tbl.table_schema = 'actividad01'
-	AND tbl.table_name = 'producto'
 	AND tbl.table_type NOT IN ('VIEW')
+	AND col.is_nullable IS NOT NULL
 	ORDER BY tbl.table_name;
+
 
 -- 03 - Llave Foránea no Detectada en Detalle de Pedidos hacia Pedidos.
 -- 		Regla de Integridad Referencial
